@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t zakabog/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run zakabog/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t zakabog/multi-client ./client
+  - docker build -t zakabog/multi-nginx  ./nginx
+  - docker build -t zakabog/multi-server ./server
+  - docker build -t zakabog/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push zakabog/multi-client
+  - docker push zakabog/multi-nginx
+  - docker push zakabog/multi-server
+  - docker push zakabog/multi-worker
